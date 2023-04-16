@@ -21,6 +21,7 @@ const generateToken = asyncHandler(async (user) => {
 
   return generatedToken;
   
+  
 });
 
 module.exports = { generateToken };
