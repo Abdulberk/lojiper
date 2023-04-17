@@ -5,6 +5,9 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const {connectDB} = require('./connection');
+const userRoutes = require('./routes/userRoutes');
+require('events').EventEmitter.defaultMaxListeners = 15;
+
 
 dotenv.config();
 
@@ -17,6 +20,9 @@ app.use(cors());
 
 connectDB()
   .then(() => {
+
+    app.use('/', userRoutes);
+
 
     app.get('/', (req,res)=> {
         return res.status(200).send('Hello World');

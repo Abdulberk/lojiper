@@ -13,6 +13,7 @@ const registerValidation = async(data) => {
 
     return  registerSchema.validateAsync(data);
 
+    
 
 }
 

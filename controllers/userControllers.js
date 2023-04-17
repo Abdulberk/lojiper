@@ -5,6 +5,8 @@ const asyncHandler = require('express-async-handler');
 const {registerValidation} = require('../validations/registerValidation');
 const {loginValidation} = require('../validations/loginValidation');
 const mongoose = require('mongoose');
+const { generateToken } = require('../auth/generateToken');
+
 
 
 
@@ -17,7 +19,7 @@ const register = asyncHandler(async (req, res) => {
 
         const {error} = await registerValidation(req.body)
 
-        const hataMesaji = error.details[0].message;
+        let hataMesaji = error?.details[0]?.message || error?.message;
 
         if (error) return res.status(400).json({message: hataMesaji});
 
@@ -39,7 +41,14 @@ const register = asyncHandler(async (req, res) => {
 
        await user.save();
 
-         return res.status(200).json({message: 'kayıt başarılı'});
+       const newToken = await generateToken(user);
+
+
+         return res.status(201).json({
+            message: 'kayıt başarılı',
+            token :  newToken
+        
+        });
 
         
     }
@@ -54,15 +63,39 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async(req,res) => {
 
-    const {email,password} = req.body;
-    const {error} = await loginValidation(req.body);
-
-    const hataMesaji = error.details[0].message;
-
-    if (error) return res.status(400).json({message: hataMesaji});
-
+    try {
+        const {email,password} = req.body;
+        const {error} = await loginValidation(req.body);
+    
+        const hataMesaji = error?.details[0]?.message || error?.message;
+    
+        if (error) return res.status(400).json({message: hataMesaji});
+    
+        const user = await User.findOne({email});
+    
+        if (!user) return res.status(404).json({message: 'bu email adresi bulunamadı'});
+    
+        const checkPassword = await bcrypt.compare(password, user.password);
+    
+        if (!checkPassword) return res.status(400).json({message: 'lütfen şifrenizi kontrol edin'});
     
     
+        const newToken = await generateToken(user);
+    
+    
+        return res.status(200).json({
+            message: 'giriş başarılı',
+            token :  newToken
+        })
+    
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({message: 'sunucuda bir hata oluştu, giriş yapılamadı'});
+        
+    }
+    
+
+
 
 
 })
@@ -72,5 +105,6 @@ const login = asyncHandler(async(req,res) => {
 
 
 
-module.exports = {register};
+module.exports = {register, login
+};
 
