@@ -7,7 +7,7 @@ const generateToken = asyncHandler(async (user) => {
   const generatedToken = jwt.sign(
     {
       id: user._id,
-      name: user.name,
+      isim: user.isim,
       email: user.email,
     },
     process.env.JWT_SECRET,

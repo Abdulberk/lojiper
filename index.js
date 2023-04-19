@@ -6,12 +6,11 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const {connectDB} = require('./connection');
 const userRoutes = require('./routes/userRoutes');
+const seferRoutes = require('./routes/seferRoutes');
 require('events').EventEmitter.defaultMaxListeners = 15;
-
+const seferOlustur = require('./data/testData');
 
 dotenv.config();
-
-
 
 const PORT = process.env.PORT || 3000;
 
@@ -21,7 +20,12 @@ app.use(cors());
 connectDB()
   .then(() => {
 
+
+    seferOlustur();
+    
     app.use('/', userRoutes);
+    app.use('/', seferRoutes);
+    
 
 
     app.get('/', (req,res)=> {

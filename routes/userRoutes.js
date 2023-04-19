@@ -10,24 +10,6 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
-router.get('/', verifyToken, 
-    async(req,res) => {
-
-        const user = await User.findById(req.user.id);
-
-        if (!user) return res.status(404).json({message: 'kullanıcı bulunamadı'});
-
-        return res.status(200).json({
-            message: 'token doğrulandı',
-            user: user.name
-        })
-
-
-    }
-)
-
-
-
 
 
 

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
 
-    name: {
+    isim: {
         
         type: String,
         required: true,
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
     },
 
-    password : {
+    sifre : {
         type: String,
         required: true,
         trim: true,
@@ -29,18 +29,19 @@ const userSchema = new mongoose.Schema({
       
     },
 
-    gender: {
+    cinsiyet: {
         type: String,
         required: true,
+        enum: ['Erkek', 'Kadın'],
         
     },
 
-    age: {
+    yas: {
         type: Number,
         required: true,
     },
 
-    phone: {
+    telefon: {
         type: Number,
         required: true,
     },

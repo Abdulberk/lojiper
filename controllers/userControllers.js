@@ -15,7 +15,7 @@ const { generateToken } = require('../auth/generateToken');
 const register = asyncHandler(async (req, res) => {
    
     try {
-        const {email, password,gender,phone, name, age} = req.body;
+        const {email, sifre,cinsiyet,telefon, isim, yas} = req.body;
 
         const {error} = await registerValidation(req.body)
 
@@ -28,15 +28,15 @@ const register = asyncHandler(async (req, res) => {
         if (checkUser) return res.status(400).json({message: 'bu email adresi kullanılıyor'});
 
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(sifre, salt);
 
         const user = new User({
-            name,
+            isim,
             email,
-            password: hashedPassword,
-            gender,
-            age,
-            phone,
+            sifre: hashedPassword,
+            cinsiyet,
+            yas,
+            telefon,
         })
 
        await user.save();
@@ -64,7 +64,7 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async(req,res) => {
 
     try {
-        const {email,password} = req.body;
+        const {email,sifre} = req.body;
         const {error} = await loginValidation(req.body);
     
         const hataMesaji = error?.details[0]?.message || error?.message;
@@ -75,7 +75,7 @@ const login = asyncHandler(async(req,res) => {
     
         if (!user) return res.status(404).json({message: 'bu email adresi bulunamadı'});
     
-        const checkPassword = await bcrypt.compare(password, user.password);
+        const checkPassword = await bcrypt.compare(sifre, user.sifre);
     
         if (!checkPassword) return res.status(400).json({message: 'lütfen şifrenizi kontrol edin'});
     
