@@ -54,6 +54,11 @@ Bu endpoint'e istek atarken herhangi bir parametre girmeniz gerek yok, kullanıc
  Aynı şekilde; bu endpoint'e istek atarken herhangi bir parametre girmeniz gerek yok, kullanıcı bilgileri middleware ile decode edilerek alınıyor.**GET** metoduyla istek atılır.
  Response olarak sefer ve biletlerle ilgili bütün detaylar ayrıntılarıyla döner. (Kalkış ve varış şehri, bilet fiyatı, kalkış saati, alınan koltuklar, sefer numarası vb.)
  
+ Aşağıdaki otobüs referans alınarak koltuklar yerleştirilmiştir, varsayılan olarak 40 adet koltuk düşünüldü.
+
+
+ ![bus](https://user-images.githubusercontent.com/107999430/233800757-7b1e58f1-d218-4404-b05c-17a04fc674f4.png)
+
  
  
  
