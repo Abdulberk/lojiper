@@ -1,4 +1,5 @@
 const Sefer = require("../models/Sefer");
+const { ObjectId } = require('mongodb');
 
 const seferData = [
   {
@@ -95,6 +96,7 @@ const seferData = [
         koltukNo: 1,
         mevcutMu: true,
         cinsiyet: "Erkek",
+        
       },
       {
         koltukNo: 2,
@@ -133,8 +135,10 @@ const koltukOlustur = async (sayi) => {
         koltukNo: i,
         mevcutMu: mevcutMu,
         cinsiyet: cinsiyet,
+        sahibi: mevcutMu === false ?  new ObjectId() : null,
       });
 
+      
     }
 
     return koltuklar;

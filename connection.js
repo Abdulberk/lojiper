@@ -11,8 +11,8 @@ const connectDB = async () =>{
   }
 
   try {
-    const connectionStr = process.env.MONGODB_URI;
-    const db = await mongoose.connect(connectionStr);
+    const baglanti = process.env.MONGODB_URI;
+    const db = await mongoose.connect(baglanti);
 
     console.log('yeni bağlantı kuruldu !');
 

@@ -66,6 +66,11 @@ const seferSchema = new mongoose.Schema({
                 type: String,
                
 
+            },
+            sahibi: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref : 'User'
+
             }
 
 
@@ -89,6 +94,7 @@ const seferSchema = new mongoose.Schema({
         required: true
     },
 
+    
 })
 
 

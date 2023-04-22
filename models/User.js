@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    seferler: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Sefer'
+        }
+
+    ]
 
 
 })

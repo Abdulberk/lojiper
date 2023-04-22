@@ -4,6 +4,108 @@ const Sefer = require("../models/Sefer");
 const { seferValidation } = require("../validations/seferValidation");
 const { saatFormatla } = require("../utils/saatFormat");
 
+const {rezervasyonYap} = require('../utils/rezervasyonYap');
+
+const {biletlerimAlaniniGuncelle} = require('../utils/rezervasyonYap');
+
+const {buSeferdenDahaOnceBiletAlindiMi} = require('../utils/rezervasyonYap');
+
+
+const biletlerimDetayGetir = asyncHandler(async (req, res) => {
+
+
+  try {
+
+
+    const {id} = req.user;
+
+    const biletlerimiGetir = await User.findById({_id:id}).populate('seferler')
+
+    if(!biletlerimiGetir) return res.status(404).json({message: 'Hiç bilet almadınız !'});
+
+
+    const seferlerim = biletlerimiGetir.seferler;
+
+    const butunDetaylar = seferlerim.map((sefer) => {
+      return {
+        seferNo: sefer.seferNo,
+        seferSaat: sefer.seferSaati,
+        biletFiyat: sefer.biletFiyat,
+        kalkisYeri: sefer.nereden,
+        varisYeri: sefer.nereye,
+        koltuklar: sefer.koltuklar
+          .filter((koltuk) => koltuk.sahibi == id)
+          .map((koltuk) =>
+            {
+              return {
+                koltukNo: koltuk.koltukNo,
+                cinsiyet: koltuk.cinsiyet
+
+              }
+            }
+          ),
+      };
+    });
+
+    return res.status(200).json({
+      butunDetaylar
+    })
+  
+
+  }catch(err) {
+    console.log(err);
+    return res.status(500).json({message: 'sunucuda bir hata oluştu'});
+
+  }
+
+
+
+
+});
+
+
+
+
+const biletlerimiGetir = asyncHandler(async (req, res) => {
+
+  try {
+
+
+    const {id} = req.user;
+
+    const biletlerimiGetir = await User.findById({_id:id}).populate('seferler')
+
+    if(!biletlerimiGetir) return res.status(404).json({message: 'Hiç bilet almadınız !'});
+
+
+    const seferlerim = biletlerimiGetir.seferler;
+
+    const seferlerimdekiKoltuklar = seferlerim.map((sefer) => {
+      return {
+        seferNo: sefer.seferNo,
+        koltuklar: sefer.koltuklar
+          .filter((koltuk) => koltuk.sahibi == id)
+          .map((koltuk) => koltuk.koltukNo),
+      };
+    });
+
+    return res.status(200).json({
+      biletlerim: seferlerimdekiKoltuklar
+
+
+    })
+  
+
+  }catch(err) {
+    console.log(err);
+    return res.status(500).json({message: 'sunucuda bir hata oluştu'});
+
+  }
+
+});
+
+
+
 const seferleriGetir = asyncHandler(async (req, res) => {
   try {
     let { nereden, nereye } = req.params;
@@ -89,18 +191,18 @@ try {
 
 
 const biletAl = asyncHandler(async (req, res) => { 
-
-
   
   try {
+    let userId = req.user.id;
 
-    
-    let{seferNo} = req.params;
+
+    let seferNo = req.params.seferNo
+    seferNo = Number(seferNo);
 
    let koltukno = req.query.koltukno || [];
-   let cinsiyetler = req.query.cinsiyetler || [];
-    let secilenKoltuklar = [];
 
+   let cinsiyetler = req.query.cinsiyetler || [];
+  let secilenKoltuklar = [];
 
    if (typeof koltukno === 'string'){
     koltukno = koltukno.split(',').map((koltuk) => Number(koltuk.trim()));
@@ -118,30 +220,18 @@ const biletAl = asyncHandler(async (req, res) => {
     for (let i = 0; i < koltukno.length; i++) {
       const koltuknoItem = Number(koltukno[i]);
       const cinsiyetItem = cinsiyetler[i];
-      secilenKoltuklar.push({ koltukno: koltuknoItem, cinsiyet: cinsiyetItem });
+
+      secilenKoltuklar.push({ koltukno: koltuknoItem, cinsiyet: cinsiyetItem
+       });
     }
 
-
-
+  
 
     let sagTaraftakiKoltuklar = [4,3,8,7,12,11,16,15,20,19,24,23,30,29,34,33,38,37];
     let solTaraftakiKoltuklar = [1,2,6,5,10,9,14,13,18,17,22,21,26,25,28,27,32,31,36,35,40,39];
-    let solumdakiKisiNo;
-    let sagimdakiKisiNo;
 
-    seferNo = Number(seferNo);
-    
-
-    console.log("koltuk no son hali : " + koltukno);
-
-
-  
     if (!koltukno) return res.status(400).json({message: 'lütfen önce koltuk seçiniz !'});
     if (!seferNo) return res.status(400).json({message: 'lütfen sefer numarasını giriniz !'});
-  
-   
-  
-     
   
       const seferSorgu = await Sefer.findOne({ seferNo: seferNo})
 
@@ -158,135 +248,174 @@ const biletAl = asyncHandler(async (req, res) => {
         }
       })
 
- const koltuklarDizi = await seferDizi[7].koltuklar.map((koltuk) => {
-
-        return {
-          koltukNo: koltuk.koltukNo,
-          mevcutMu: koltuk.mevcutMu,
-          cinsiyet: koltuk.cinsiyet,
-
-        }
+      const KOLTUKLAR_INDEX = 7;
+      const koltuklarDizi = await seferDizi[KOLTUKLAR_INDEX].koltuklar.map((koltuk) => {
+        return {koltukNo: koltuk.koltukNo, mevcutMu: koltuk.mevcutMu, cinsiyet: koltuk.cinsiyet,}
       }) 
 
-      const koltukBul = await koltuklarDizi.find((koltuk)=> koltuk.koltukNo === koltukno)
-
-      if (!koltukBul) return res.status(404).json({message: 'bu koltuk numarasına ait koltuk bulunamadı'});
       
-      if (koltukBul.mevcutMu === false) return res.status(400).json({message: 'bu koltuk zaten dolu, lütfen başka bir koltuk seçiniz'});
 
-      let yanimdakiKisi;
+      let koltukHataListesi = [];
+      let alinacakKoltuklar = [];
 
+      for (let i = 0; i < secilenKoltuklar.length; i++) {
+        const secilenKoltuk = secilenKoltuklar[i];
+       
+        const koltukSorgula = await koltuklarDizi.find(
+          (koltuk) => koltuk.koltukNo === secilenKoltuk.koltukno
+        );
       
-      if (solTaraftakiKoltuklar.includes(koltukno)) {
-
-        if (koltukno % 2 ===1){
-          secilenKoltuklar.push(koltukno);
-          sagimdakiKisiNo = koltukno + 1;
-
-          yanimdakiKisi = await koltuklarDizi.find(
-            (koltuk) => koltuk.koltukNo === sagimdakiKisiNo && koltuk.mevcutMu === false
-          )
-
-          if (yanimdakiKisi?.cinsiyet !== cinsiyetim && yanimdakiKisi?.mevcutMu === false)
-           return res.status(400).json({
-
-
-            message: "yanınızdaki kişiyle aynı cinsiyette olmalısınız !"
-          })
-
-
-          if (yanimdakiKisi?.cinsiyet === cinsiyetim && yanimdakiKisi?.mevcutMu === false) {
-            secilenKoltuklar.push(sagimdakiKisiNo);
-
-          }
-
+        if (!koltukSorgula) {
+          koltukHataListesi.push({
+            message: `${secilenKoltuk.koltukno} numaralı koltuk bulunamadı`,
+          });
         }
-        else if(koltukno % 2 === 0){
-          secilenKoltuklar.push(koltukno);
-
-          solumdakiKisiNo = koltukno - 1;
-
-          yanimdakiKisi = await koltuklarDizi.find(
-            (koltuk) => koltuk.koltukNo === solumdakiKisiNo && koltuk.mevcutMu === false
-          )
-
-          if (yanimdakiKisi?.cinsiyet !== cinsiyetim && yanimdakiKisi?.mevcutMu === false)
-            return res.status(400).json({
-              message: "yanınızdaki kişiyle aynı cinsiyette olmalısınız !"
-            })
-
-          if (yanimdakiKisi?.cinsiyet === cinsiyetim && yanimdakiKisi?.mevcutMu === false) {
-            secilenKoltuklar.push(solumdakiKisiNo);
-          }
-
-    
+        if (koltukSorgula && koltukSorgula.mevcutMu === false) {
+          koltukHataListesi.push({
+            message: `${secilenKoltuk.koltukno} numaralı koltuk dolu`,
+          });
         }
 
+       if (koltukSorgula?.mevcutMu) {
+        alinacakKoltuklar.push({
+          koltukNo: koltukSorgula.koltukNo,
+          cinsiyet: secilenKoltuk.cinsiyet,
+        
+        })
+       }
       }
 
+      if (alinacakKoltuklar.length > 0) {
+        for (let i = 0; i < alinacakKoltuklar.length; i++) {
+          const alinacakKoltuk = alinacakKoltuklar[i];
+          if (solTaraftakiKoltuklar.includes(alinacakKoltuk.koltukNo)) {
+            if (alinacakKoltuk.koltukNo % 2 === 1) {
+              const yanKoltukSorgula = await koltuklarDizi.find(
+                (koltuk) => koltuk.koltukNo === alinacakKoltuk.koltukNo + 1
+              
+              );
+             
 
+              if (yanKoltukSorgula.mevcutMu === false) {
 
+                if (yanKoltukSorgula.cinsiyet !== alinacakKoltuk.cinsiyet) {
 
+                  koltukHataListesi.push({
+                    message: `${alinacakKoltuk.koltukNo} numaralı koltuğun yanında ${yanKoltukSorgula.cinsiyet} cinsiyetli bir kişi var ve seçtiğiniz koltuk ${alinacakKoltuk.cinsiyet} cinsiyetli bir koltuk!`,
+                  });
 
-      if (sagTaraftakiKoltuklar.includes(koltukno)) {
+                  alinacakKoltuklar.splice(i, 1); 
+                  
 
+                } 
+              } 
 
-        if (koltukno % 2 ===1) {
+            }
+            if (alinacakKoltuk.koltukNo % 2 === 0) {
+              const yanKoltukSorgula = await koltuklarDizi.find(
+                (koltuk) => koltuk.koltukNo === alinacakKoltuk.koltukNo - 1
 
-          secilenKoltuklar.push(koltukno);
-          sagimdakiKisiNo = koltukno + 1;
+              )
+             
 
-          yanimdakiKisi = await koltuklarDizi.find(
-            (koltuk) => koltuk.koltukNo === sagimdakiKisiNo && koltuk.mevcutMu === false
-          )
+              if (yanKoltukSorgula.mevcutMu === false) {
 
-          if (yanimdakiKisi?.cinsiyet !== cinsiyetim && yanimdakiKisi?.mevcutMu === false)
-            return res.status(400).json({
-              message: "yanınızdaki kişiyle aynı cinsiyette olmalısınız !"
-            })
+                if (yanKoltukSorgula.cinsiyet !==  alinacakKoltuk.cinsiyet) {
 
-          if (yanimdakiKisi?.cinsiyet === cinsiyetim && yanimdakiKisi?.mevcutMu === false) {
-            secilenKoltuklar.push(sagimdakiKisiNo);
+                  koltukHataListesi.push({
+                    message: `${alinacakKoltuk.koltukNo} numaralı koltuğun yanında ${yanKoltukSorgula.cinsiyet} cinsiyetli bir kişi var ve seçtiğiniz koltuk ${alinacakKoltuk.cinsiyet} cinsiyetli bir koltuk!`,
+                  });
+
+                  alinacakKoltuklar.splice(i, 1); 
+                 
+                }
+              }
+
+            }
           }
+          if (sagTaraftakiKoltuklar.includes(alinacakKoltuk.koltukNo)) {
+            if (alinacakKoltuk.koltukNo % 2 === 1) {
+              const yanKoltukSorgula = await koltuklarDizi.find(
+                (koltuk) => koltuk.koltukNo === alinacakKoltuk.koltukNo + 1
 
+              )
+             
 
+              if (yanKoltukSorgula.mevcutMu === false) {
 
-          
-        }
-        else {
-          secilenKoltuklar.push(koltukno);
-          solumdakiKisiNo = koltukno - 1;
+                if (yanKoltukSorgula.cinsiyet !== alinacakKoltuk.cinsiyet) {
 
-          yanimdakiKisi = await koltuklarDizi.find(
-            (koltuk) => koltuk.koltukNo === solumdakiKisiNo && koltuk.mevcutMu === false
-          )
+                  koltukHataListesi.push({
+                    message: `${alinacakKoltuk.koltukNo} numaralı koltuğun yanında ${yanKoltukSorgula.cinsiyet} cinsiyetli bir kişi var ve seçtiğiniz koltuk ${alinacakKoltuk.cinsiyet} cinsiyetli bir koltuk!`,
+                  });
 
-          if (yanimdakiKisi?.cinsiyet !== cinsiyetim && yanimdakiKisi?.mevcutMu === false)
-            
-            return res.status(400).json({
-              message: "yanınızdaki kişiyle aynı cinsiyette olmalısınız !"
-            })
+                  alinacakKoltuklar.splice(i, 1);
 
-          if (yanimdakiKisi?.cinsiyet === cinsiyetim && yanimdakiKisi?.mevcutMu === false) {
+                 
+                  
+                }
+              }
+            }
 
-            secilenKoltuklar.push(solumdakiKisiNo);
+            if (alinacakKoltuk.koltukNo % 2 === 0) {
+              const yanKoltukSorgula = await koltuklarDizi.find((koltuk) => koltuk.koltukNo === alinacakKoltuk.koltukNo - 1)
+             
+              if (yanKoltukSorgula.mevcutMu === false) {
+                if (yanKoltukSorgula.cinsiyet !== alinacakKoltuk.cinsiyet) {
 
+                  koltukHataListesi.push({ message:`${alinacakKoltuk.koltukNo} numaralı koltuğun yanında ${yanKoltukSorgula.cinsiyet} cinsiyetli bir kişi var ve seçtiğiniz koltuk ${alinacakKoltuk.cinsiyet} cinsiyetli bir koltuk!`,});
+
+                  alinacakKoltuklar.splice(i, 1);
+                 
           }
-
         }
-
+      }
+    }
+        }
       }
 
-    
-  
-    return res.status(200).json({
-      message: 'bilet alındı',
-      secilenKoltuk: secilenKoltuklar.length > 0 ? secilenKoltuklar : 'koltuk seçimi yapılmadı',
-      sagdaki: sagimdakiKisiNo ? sagimdakiKisiNo : 'sağ tarafınızda kimse yok !',
-      soldaki: solumdakiKisiNo ? solumdakiKisiNo : 'sol tarafınızda kimse yok !',
-      yanimdakiKisiBilgisi: yanimdakiKisi ? yanimdakiKisi : 'yanınızda kimse yok !',
-    })
+      let statusCode = null;
+      if (koltukHataListesi.length > 0) {
 
+        statusCode = 400;
+        return res.status(statusCode).json({ koltukHataListesi, alinacakKoltuklar });
+
+      }
+      if (koltukHataListesi.length === 0) {
+       
+
+        const dahaOnceBiletAlindiMi = await buSeferdenDahaOnceBiletAlindiMi(userId, seferSorgu);
+
+        if (dahaOnceBiletAlindiMi===true) {
+
+          statusCode = 400;
+          return res.status(statusCode).json({ message: 'Bu seferden daha önce zaten bilet almışsınız !' });
+
+        }
+
+        if (dahaOnceBiletAlindiMi===false) {
+
+          const rezervasyonSonuc = await rezervasyonYap(alinacakKoltuklar, seferNo, userId);
+
+        await biletlerimAlaniniGuncelle(userId, seferSorgu)
+        
+
+        if (rezervasyonSonuc) {
+          statusCode = 200;
+          return res.status(statusCode).json({ message: 'Rezervasyon başarılı', rezervasyonSonuc });
+        }
+
+        if (!rezervasyonSonuc) {
+          statusCode = 500;
+          return res.status(statusCode).json({ message: 'Rezervasyon başarısız' });
+        }
+
+
+
+      }
+    }
+
+     
 
   } catch (error) {
     console.log(error);
@@ -301,4 +430,4 @@ const biletAl = asyncHandler(async (req, res) => {
 
 
 
-module.exports = { seferleriGetir, seferDetayGetir, biletAl};
+module.exports = { seferleriGetir, seferDetayGetir, biletAl, biletlerimiGetir, biletlerimDetayGetir};
